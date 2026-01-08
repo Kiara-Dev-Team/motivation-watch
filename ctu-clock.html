@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTU CLOCK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', monospace;
+      overflow: hidden;
+    }
+
+    .container {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      padding: 40px;
+    }
+
+    /* Scanline effect */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      z-index: 1000;
+    }
+
+    /* Grid lines background */
+    .grid-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(255, 180, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 180, 0, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      z-index: -1;
+    }
+
+    /* Corner brackets */
+    .corner {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: #ffb400;
+      border-style: solid;
+      border-width: 0;
+    }
+    .corner-tl { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; }
+    .corner-tr { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; }
+    .corner-bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; }
+    .corner-br { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 180, 0, 0.3);
+    }
+
+    .ctu-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: #ffb400;
+      letter-spacing: 8px;
+      text-shadow: 0 0 20px rgba(255, 180, 0, 0.5);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #00ff00;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #00ff00;
+      border-radius: 50%;
+      animation: pulse 1s ease-in-out infinite;
+      box-shadow: 0 0 10px #00ff00;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Main clock display */
+    .clock-container {
+      background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(5, 5, 5, 0.95) 100%);
+      border: 1px solid rgba(255, 180, 0, 0.4);
+      padding: 40px;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .clock-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ffb400, transparent);
+    }
+
+    .time-display {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(4rem, 15vw, 10rem);
+      font-weight: 700;
+      color: #ffb400;
+      text-align: center;
+      letter-spacing: 8px;
+      text-shadow: 
+        0 0 30px rgba(255, 180, 0, 0.8),
+        0 0 60px rgba(255, 180, 0, 0.4),
+        0 0 100px rgba(255, 180, 0, 0.2);
+      position: relative;
+    }
+
+    .time-display .colon {
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .seconds-display {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 6vw, 4rem);
+      color: #ff6b00;
+      text-align: center;
+      letter-spacing: 4px;
+      margin-top: 10px;
+      text-shadow: 0 0 20px rgba(255, 107, 0, 0.6);
+    }
+
+
+    .ampm {
+      font-size: 0.4em;
+      color: #888;
+      margin-left: 10px;
+      vertical-align: super;
+    }
+
+    /* Info panels */
+    .info-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-panel {
+      background: rgba(10, 10, 10, 0.8);
+      border: 1px solid rgba(255, 180, 0, 0.2);
+      padding: 15px;
+      position: relative;
+    }
+
+    .info-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: #ffb400;
+    }
+
+    .info-label {
+      font-size: 0.65rem;
+      color: #666;
+      letter-spacing: 3px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .info-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: #ffb400;
+      letter-spacing: 2px;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      margin-bottom: 20px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #666;
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: rgba(255, 180, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b00, #ffb400);
+      transition: width 1s linear;
+      box-shadow: 0 0 10px rgba(255, 180, 0, 0.5);
+    }
+
+    /* Alert ticker */
+    .ticker {
+      background: rgba(255, 0, 0, 0.1);
+      border: 1px solid rgba(255, 0, 0, 0.3);
+      padding: 10px 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .ticker-content {
+      display: flex;
+      animation: scroll 20s linear infinite;
+      white-space: nowrap;
+    }
+
+    .ticker-item {
+      color: #ff4444;
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding-right: 100px;
+    }
+
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Timestamp footer */
+    .footer {
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 180, 0, 0.3);
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #444;
+      letter-spacing: 2px;
+    }
+
+    /* Glitch effect on hover */
+    .clock-container:hover .time-display {
+      animation: glitch 0.3s ease;
+    }
+
+    @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .info-row {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 20px;
+      }
+      .clock-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="grid-bg"></div>
+  
+  <div class="container">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="header">
+      <div class="ctu-logo">CTU</div>
+      <div class="status">
+        <div class="status-dot"></div>
+        <span>SYSTEM ACTIVE</span>
+      </div>
+    </div>
+
+    <div class="clock-container">
+      <div class="time-display">
+        <span id="hours">00</span><span class="colon">:</span><span id="minutes">00</span>
+      </div>
+      <div class="seconds-display">
+        <span id="seconds">00</span>
+      </div>
+      
+    </div>
+
+    <div class="info-row">
+      <div class="info-panel">
+        <div class="info-label">Date</div>
+        <div class="info-value" id="date">--/--/----</div>
+      </div>
+      <div class="info-panel">
+        <div class="info-label">Day</div>
+        <div class="info-value" id="day">-------</div>
+      </div>
+      <div class="info-panel">
+        <div class="info-label">Timezone</div>
+        <div class="info-value" id="timezone">---</div>
+      </div>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-label">
+        <span>DAY PROGRESS</span>
+        <span id="progress-percent">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="ticker">
+      <div class="ticker-content">
+        <span class="ticker-item">/// PRIORITY ALERT: TIME IS CRITICAL ///</span>
+        <span class="ticker-item">/// COUNTDOWN ACTIVE ///</span>
+        <span class="ticker-item">/// SECURE CHANNEL OPEN ///</span>
+        <span class="ticker-item">/// ALL UNITS STANDBY ///</span>
+        <span class="ticker-item">/// PRIORITY ALERT: TIME IS CRITICAL ///</span>
+        <span class="ticker-item">/// COUNTDOWN ACTIVE ///</span>
+        <span class="ticker-item">/// SECURE CHANNEL OPEN ///</span>
+        <span class="ticker-item">/// ALL UNITS STANDBY ///</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span id="unix-time">UNIX: 0000000000</span>
+      <span>CTU LOS ANGELES</span>
+    </div>
+  </div>
+
+  <script>
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    
+    function pad(num) {
+      return num.toString().padStart(2, '0');
+    }
+
+    function updateClock() {
+      const now = new Date();
+      
+      // Time
+      document.getElementById('hours').textContent = pad(now.getHours());
+      document.getElementById('minutes').textContent = pad(now.getMinutes());
+      document.getElementById('seconds').textContent = pad(now.getSeconds());
+      
+      // Date
+      const month = pad(now.getMonth() + 1);
+      const day = pad(now.getDate());
+      const year = now.getFullYear();
+      document.getElementById('date').textContent = `${month}.${day}.${year}`;
+      
+      // Day
+      document.getElementById('day').textContent = days[now.getDay()];
+      
+      // Timezone
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const tzAbbr = now.toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ')[2];
+      document.getElementById('timezone').textContent = tzAbbr || 'LOCAL';
+      
+      // Unix timestamp
+      document.getElementById('unix-time').textContent = `UNIX: ${Math.floor(now.getTime() / 1000)}`;
+      
+      // Day progress
+      const totalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+      const dayProgress = (totalSeconds / 86400) * 100;
+      document.getElementById('progress-fill').style.width = `${dayProgress}%`;
+      document.getElementById('progress-percent').textContent = `${dayProgress.toFixed(1)}%`;
+    }
+
+    // Initial update
+    updateClock();
+    
+    // Update every second
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
