@@ -36,7 +36,7 @@ const PLANETS = [
 /**
  * SolarSystemView is the main screen component featuring an animated Solar System
  * with pinch-to-zoom functionality.
- * 
+ *
  * Features:
  * - Sun at center with glow effect
  * - 8 planets orbiting at different speeds and distances

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {View, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,7 +20,7 @@ interface PlanetProps {
 /**
  * Planet component represents a single planet in the solar system.
  * Each planet orbits around the center (Sun) at different speeds and distances.
- * 
+ *
  * Orbital mechanics:
  * - Inner planets (Mercury, Venus, Earth, Mars) orbit faster
  * - Outer planets (Jupiter, Saturn, Uranus, Neptune) orbit slower
