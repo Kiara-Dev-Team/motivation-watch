@@ -4,27 +4,19 @@ import {
   StyleSheet,
   Text,
   Dimensions,
-  StatusBar,
-  SafeAreaView,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
-import {GestureDetector, Gesture} from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
-import Planet from '../components/Planet';
+import PlanetWeb from '../components/Planet.web';
 import OrbitPath from '../components/OrbitPath';
 import PomodoroTimer from '../components/PomodoroTimer';
-import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel';
+import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel.web';
 
 const {width, height} = Dimensions.get('window');
 const CENTER_X = width / 2;
 const CENTER_Y = height / 2;
 
 // Planet data: name, size, color, distance from sun, orbital period (seconds)
-// Distances and speeds are scaled for mobile screen visualization
 const PLANETS = [
   {name: 'Mercury', size: 8, color: '#8C7853', distance: 40, speed: 12},
   {name: 'Venus', size: 12, color: '#FFC870', distance: 55, speed: 18},
@@ -37,23 +29,21 @@ const PLANETS = [
 ];
 
 /**
- * SolarSystemView is the main screen component featuring an animated Solar System
- * with pinch-to-zoom functionality, Pomodoro timer, and settings panel.
+ * SolarSystemView - Web optimized version
  *
  * Features:
  * - Sun at center with glow effect
  * - 8 planets orbiting at different speeds and distances
- * - Orbital paths shown as thin circular lines
  * - Dark space background with stars
- * - Pinch gesture for zoom control (0.5x to 3x)
  * - Pomodoro timer with customizable durations
  * - Settings panel accessible via gear icon
- * - Smooth animations at 60fps using react-native-reanimated
+ * - Mouse wheel zoom (web-friendly)
  */
 const SolarSystemView: React.FC = () => {
   // Settings state
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsPanelVisible, setSettingsPanelVisible] = useState(false);
+  const [scale, setScale] = useState(1);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -69,34 +59,15 @@ const SolarSystemView: React.FC = () => {
     }
   }, []);
 
-  // Shared values for pinch-to-zoom gesture
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
+  // Mouse wheel zoom handler
+  const handleWheel = (e: any) => {
+    e.preventDefault();
+    const delta = e.deltaY * -0.001;
+    const newScale = Math.min(Math.max(scale + delta, 0.5), 3);
+    setScale(newScale);
+  };
 
-  // Pinch gesture handler
-  // Users can pinch to zoom in/out while maintaining focus on the Sun at center
-  const pinchGesture = Gesture.Pinch()
-    .onUpdate(e => {
-      // Calculate new scale with limits (0.5x to 3x)
-      const newScale = savedScale.value * e.scale;
-      scale.value = Math.min(Math.max(newScale, 0.5), 3);
-    })
-    .onEnd(() => {
-      // Save the final scale value for next gesture
-      savedScale.value = scale.value;
-    });
-
-  // Animated style for the zoom container
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {scale: withSpring(scale.value, {damping: 15, stiffness: 150})},
-      ],
-    };
-  });
-
-  // Render stars in the background - memoized to prevent recreation on every render
-  // Using useMemo ensures star positions are generated once and reused
+  // Render stars in the background
   const stars = useMemo(() => {
     const starElements = [];
     for (let i = 0; i < 100; i++) {
@@ -125,55 +96,64 @@ const SolarSystemView: React.FC = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {typeof StatusBar !== 'undefined' && <StatusBar barStyle="light-content" backgroundColor="#000000" />}
-
+    <View style={styles.container}>
       {/* Background stars */}
       <View style={styles.starsContainer}>{stars}</View>
 
       {/* Header text */}
       <View style={styles.header}>
-        <Text style={styles.title}>Solar System - Top View</Text>
-        <Text style={styles.subtitle}>Pinch to zoom</Text>
+        <Text style={styles.title}>Motivation Watch 🚀⏱️</Text>
+        <Text style={styles.subtitle}>Scroll to zoom</Text>
       </View>
 
-      {/* Solar System with pinch-to-zoom gesture */}
-      <GestureDetector gesture={pinchGesture}>
-        <Animated.View style={[styles.gestureContainer]}>
-          <Animated.View
-            style={[
-              styles.solarSystemContainer,
-              {
-                left: CENTER_X,
-                top: CENTER_Y,
-              },
-              animatedStyle,
-            ]}>
-            {/* Sun at center with glow effect */}
-            <View style={styles.sunGlow}>
-              <View style={styles.sun} />
-            </View>
+      {/* Solar System - scrollable container for zoom */}
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={(e: any) => {
+          // Handle wheel event for zoom
+          if (e.nativeEvent && e.nativeEvent.deltaY) {
+            handleWheel(e.nativeEvent);
+          }
+        }}
+        scrollEnabled={false}
+      >
+        <View
+          style={[
+            styles.solarSystemContainer,
+            {
+              transform: [{scale}],
+              left: CENTER_X,
+              top: CENTER_Y,
+            },
+          ]}
+          onWheel={handleWheel}
+        >
+          {/* Sun at center with glow effect */}
+          <View style={styles.sunGlow}>
+            <View style={styles.sun} />
+          </View>
 
-            {/* Render orbital paths */}
-            {settings.showOrbits && PLANETS.map(planet => (
+          {/* Render orbital paths */}
+          {settings.showOrbits &&
+            PLANETS.map(planet => (
               <OrbitPath key={`orbit-${planet.name}`} radius={planet.distance} />
             ))}
 
-            {/* Render planets */}
-            {PLANETS.map((planet, index) => (
-              <Planet
-                key={planet.name}
-                name={planet.name}
-                size={planet.size}
-                color={planet.color}
-                distance={planet.distance}
-                speed={planet.speed}
-                initialAngle={(index * Math.PI) / 4} // Distribute planets initially
-              />
-            ))}
-          </Animated.View>
-        </Animated.View>
-      </GestureDetector>
+          {/* Render planets */}
+          {PLANETS.map((planet, index) => (
+            <PlanetWeb
+              key={planet.name}
+              name={planet.name}
+              size={planet.size}
+              color={planet.color}
+              distance={planet.distance}
+              speed={planet.speed}
+              initialAngle={(index * Math.PI) / 4}
+            />
+          ))}
+        </View>
+      </ScrollView>
 
       {/* Settings Gear Icon - Bottom Left */}
       <TouchableOpacity
@@ -202,14 +182,14 @@ const SolarSystemView: React.FC = () => {
         settings={settings}
         onSettingsChange={setSettings}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000', // Dark space background
+    backgroundColor: '#000000',
   },
   starsContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -236,40 +216,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
   },
-  gestureContainer: {
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
     flex: 1,
   },
   solarSystemContainer: {
     position: 'absolute',
-    // Container centered at specified coordinates
-    // All child elements positioned relative to this center point
   },
   sun: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#FFA500', // Orange
+    backgroundColor: '#FFA500',
     position: 'absolute',
-    left: -15, // Center the sun
+    left: -15,
     top: -15,
-    shadowColor: '#FFD700',
-    shadowOffset: {width: 0, height: 0},
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 10,
   },
   sunGlow: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255, 215, 0, 0.3)', // Yellow glow
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
     position: 'absolute',
     left: -25,
     top: -25,
-    shadowColor: '#FFD700',
-    shadowOffset: {width: 0, height: 0},
-    shadowOpacity: 0.8,
-    shadowRadius: 30,
   },
   settingsIcon: {
     position: 'absolute',
