@@ -1,54 +1,75 @@
-# Motivation Watch
+# Motivation Watch 🚀⏱️
 
-A React Native iOS app featuring an animated Solar System visualization with beautiful animations and interactive gestures.
+A space-themed pomodoro timer that helps you stay focused and motivated with a beautiful animated Solar System visualization. Start as a web app, evolving into an iOS app.
 
-## Features
+## What is Motivation Watch?
 
-### Solar System Visualization
-- ☀️ Sun at the center with glowing effect
-- 🪐 8 planets orbiting at realistic relative speeds:
-  - Mercury (gray, fast orbit)
-  - Venus (yellowish, fast)
-  - Earth (blue with atmosphere)
-  - Mars (reddish)
-  - Jupiter (large, beige/tan)
-  - Saturn (medium-large, tan)
-  - Uranus (light blue)
-  - Neptune (dark blue)
-- 🌌 Orbital paths shown as thin circular lines
-- ⭐ Dark space background with scattered stars
-- 📱 Smooth 60fps animations
-- 🤏 Pinch-to-zoom gesture support (0.5x to 3x zoom)
+Motivation Watch combines the proven productivity technique of the Pomodoro method with an immersive space experience. Watch the planets orbit around the Sun as you work through your focus sessions, making time management both functional and visually captivating.
+
+## Core Features
+
+### 🍅 Pomodoro Timer
+- Focus sessions with customizable work/break intervals
+- Visual countdown integrated with space animation
+- Clean, distraction-free main screen
+- Session tracking and statistics
+
+### 🌌 Space Visualization
+- Stunning Solar System with 8 orbiting planets
+- Real-time animated orbital movements
+- Beautiful star-filled space background
+- Smooth 60fps animations
+- Pinch-to-zoom gesture support (0.5x to 3x)
+
+### ⚙️ Settings Panel
+- Accessible via gear icon
+- Customize timer durations
+- Adjust visual preferences
+- Keeps the main screen clean and focused
+
+## Roadmap
+
+### Version 1.0 (Current Focus)
+- **Web App** - Accessible from any browser
+- Core pomodoro functionality
+- Space-themed UI with gear icon for settings
+- Clean, minimalist main screen
+
+### Future Plans
+- **iOS Native App** - Enhanced mobile experience
+- Advanced statistics and insights
+- Customizable space themes
+- Notification system
 
 ## Technical Stack
 
-- **Framework**: React Native 0.73.2
+- **Framework**: React Native 0.73.2 (cross-platform ready)
 - **Language**: TypeScript
 - **Animation**: react-native-reanimated
 - **Gestures**: react-native-gesture-handler
-- **Minimum iOS**: 13.0
-- **Target**: iPhone devices
+- **Platform Support**: Web (current), iOS (planned)
 
-## Architecture
+## Project Structure
 
 ```
-React Native App
+motivation-watch/
 ├── src/
 │   ├── components/
-│   │   ├── Planet.tsx - Individual planet with orbital animation
-│   │   └── OrbitPath.tsx - Circular orbital path rings
+│   │   ├── Planet.tsx           # Orbiting planet animations
+│   │   ├── OrbitPath.tsx        # Orbital path rings
+│   │   ├── PomodoroTimer.tsx    # Timer logic & display (planned)
+│   │   └── SettingsPanel.tsx    # Settings gear menu (planned)
 │   └── screens/
-│       └── SolarSystemView.tsx - Main screen with pinch-to-zoom
-├── App.tsx - Root component
-└── index.js - Entry point
+│       └── SolarSystemView.tsx  # Main space visualization
+├── App.tsx
+└── index.js
 ```
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js >= 18
-- iOS development environment (Xcode, CocoaPods)
-- React Native CLI
+- npm or yarn
 
 ### Installation
 
@@ -63,54 +84,47 @@ cd motivation-watch
 npm install
 ```
 
-3. Install iOS pods
+3. Run the development server
 ```bash
-cd ios && pod install && cd ..
+npm start
 ```
 
-4. Run on iOS
+4. For iOS (future)
 ```bash
+cd ios && pod install && cd ..
 npm run ios
 ```
 
-## Development
+## Design Philosophy
 
-### Key Components
+**Clean & Focused**: The main screen remains minimal and distraction-free, with all controls tucked away in the settings panel.
 
-- **Planet.tsx**: Renders individual planets with continuous orbital animation using `react-native-reanimated`. Each planet has configurable size, color, distance from Sun, and orbital speed.
+**Beautiful & Functional**: The space theme isn't just decoration—it provides a calming, meditative backdrop that helps you maintain focus during work sessions.
 
-- **OrbitPath.tsx**: Renders semi-transparent circular rings showing planetary orbital paths.
+**Progressive Enhancement**: Start on web, scale to native iOS for enhanced mobile experience.
 
-- **SolarSystemView.tsx**: Main screen component that:
-  - Positions Sun at screen center
-  - Renders all planets and orbital paths
-  - Implements pinch-to-zoom gesture
-  - Displays background stars
-  - Shows header text overlay
+## Contributing
 
-### Animation System
+We welcome contributions! Whether it's:
+- 🐛 Bug fixes
+- ✨ New features
+- 📖 Documentation improvements
+- 🎨 UI/UX enhancements
 
-The app uses `react-native-reanimated` for high-performance animations:
-- Planets use `useSharedValue` and `withRepeat` for continuous orbital motion
-- Zoom uses `withSpring` for smooth, natural feeling scaling
-- All animations run on the UI thread at 60fps
+Please feel free to open issues or submit pull requests.
 
-### Gesture Handling
+## Reference Design
 
-Pinch-to-zoom is implemented using `react-native-gesture-handler`:
-- Detects pinch gestures
-- Scales the Solar System view between 0.5x and 3x
-- Maintains focus on the Sun at screen center
-- Uses spring animation for smooth zoom transitions
-
-## Scripts
-
-- `npm start` - Start Metro bundler
-- `npm run ios` - Run on iOS simulator
-- `npm run android` - Run on Android emulator
-- `npm run lint` - Run ESLint
-- `npm test` - Run tests
+The UI is inspired by a clean, space-themed pomodoro concept with:
+- Central focus on the timer
+- Gear icon for accessing settings
+- Minimalist control panel
+- Immersive space background
 
 ## License
 
 All rights reserved.
+
+---
+
+**Stay focused. Reach for the stars.** 🌟
