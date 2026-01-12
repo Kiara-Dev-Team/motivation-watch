@@ -68,7 +68,7 @@ motivation-watch/
 ## Getting Started
 
 ### Prerequisites
-- Node.js >= 18
+- Node.js 20.x
 - npm or yarn
 
 ### Installation
