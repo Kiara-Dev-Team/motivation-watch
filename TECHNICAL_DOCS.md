@@ -148,7 +148,7 @@ const pinchGesture = Gesture.Pinch()
 ### Animation Performance
 1. **react-native-reanimated**: All animations run on UI thread
 2. **Shared Values**: Minimize JS↔Native bridge communication
-3. **Memoization**: Stars rendered once with `useCallback`
+3. **Memoization**: Stars rendered once with `useMemo`
 4. **Linear Easing**: Constant orbital speed (no acceleration/deceleration)
 
 ### Rendering Optimizations

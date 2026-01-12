@@ -73,6 +73,7 @@ const SolarSystemView: React.FC = () => {
   });
 
   // Render stars in the background - memoized to prevent recreation on every render
+  // Using useMemo ensures star positions are generated once and reused
   const stars = useMemo(() => {
     const starElements = [];
     for (let i = 0; i < 100; i++) {
