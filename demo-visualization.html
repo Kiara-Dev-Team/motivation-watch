@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Visualization - React Native Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            background: #000;
+            border-radius: 40px;
+            border: 12px solid #1c1c1e;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 30px;
+            background: #1c1c1e;
+            border-radius: 0 0 20px 20px;
+            z-index: 1000;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            z-index: 100;
+        }
+
+        .title {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .demo-note {
+            position: absolute;
+            bottom: -60px;
+            left: 0;
+            right: 0;
+            color: #888;
+            text-align: center;
+            font-size: 14px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="screen">
+            <div class="header">
+                <div class="title">Solar System - Top View</div>
+                <div class="subtitle">Pinch to zoom</div>
+            </div>
+            <canvas id="solarSystem"></canvas>
+            <div class="info">
+                React Native App Demo - Animated Solar System with Pinch-to-Zoom
+            </div>
+        </div>
+        <div class="demo-note">
+            ⬆️ This is a demonstration of the React Native app UI
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('solarSystem');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size to match phone screen
+        canvas.width = 390;
+        canvas.height = 844;
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Planet data matching the React Native app
+        const planets = [
+            {name: 'Mercury', size: 8, color: '#8C7853', distance: 40, speed: 0.006, angle: 0},
+            {name: 'Venus', size: 12, color: '#FFC870', distance: 55, speed: 0.0045, angle: Math.PI / 4},
+            {name: 'Earth', size: 13, color: '#4169E1', distance: 70, speed: 0.003, angle: Math.PI / 2},
+            {name: 'Mars', size: 10, color: '#CD5C5C', distance: 85, speed: 0.0024, angle: 3 * Math.PI / 4},
+            {name: 'Jupiter', size: 28, color: '#DAA520', distance: 115, speed: 0.0012, angle: Math.PI},
+            {name: 'Saturn', size: 24, color: '#F4A460', distance: 145, speed: 0.0009, angle: 5 * Math.PI / 4},
+            {name: 'Uranus', size: 16, color: '#4FD5D5', distance: 170, speed: 0.0006, angle: 3 * Math.PI / 2},
+            {name: 'Neptune', size: 16, color: '#4169E1', distance: 190, speed: 0.0003, angle: 7 * Math.PI / 4}
+        ];
+
+        // Generate random stars
+        const stars = [];
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 1,
+                opacity: Math.random() * 0.5 + 0.3
+            });
+        }
+
+        function drawStars() {
+            stars.forEach(star => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawSun() {
+            // Outer glow
+            const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 25);
+            glowGradient.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
+            glowGradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun core
+            const sunGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 15);
+            sunGradient.addColorStop(0, '#FFA500');
+            sunGradient.addColorStop(1, '#FF8C00');
+            ctx.fillStyle = sunGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun highlight
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(centerX - 3, centerY - 3, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        function drawOrbitPath(radius) {
+            ctx.strokeStyle = 'rgba(136, 136, 136, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function drawPlanet(planet) {
+            const x = centerX + Math.cos(planet.angle) * planet.distance;
+            const y = centerY + Math.sin(planet.angle) * planet.distance;
+
+            // Planet shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            // Planet
+            ctx.fillStyle = planet.color;
+            ctx.beginPath();
+            ctx.arc(x, y, planet.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Highlight for gas giants
+            if (['Jupiter', 'Saturn', 'Uranus', 'Neptune'].includes(planet.name)) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.beginPath();
+                ctx.arc(x - planet.size / 6, y - planet.size / 6, planet.size / 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw stars
+            drawStars();
+
+            // Draw orbital paths
+            planets.forEach(planet => {
+                drawOrbitPath(planet.distance);
+            });
+
+            // Draw sun
+            drawSun();
+
+            // Draw and update planets
+            planets.forEach(planet => {
+                drawPlanet(planet);
+                planet.angle += planet.speed;
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        animate();
+
+        // Prevent context menu on right-click
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+    </script>
+</body>
+</html>
