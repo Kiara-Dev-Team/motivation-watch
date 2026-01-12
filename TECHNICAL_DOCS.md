@@ -188,7 +188,7 @@ Includes react-native-gesture-handler and react-native-reanimated CocoaPods.
 ## Setup Instructions
 
 ### Prerequisites
-- Node.js 20 or higher
+- Node.js 20.x
 - Xcode 14+ (for iOS development)
 - CocoaPods installed
 - React Native CLI
