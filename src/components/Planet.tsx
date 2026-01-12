@@ -76,7 +76,7 @@ const Planet: React.FC<PlanetProps> = ({
         },
         animatedStyle,
       ]}
-      accessibilityLabel={`${name} planet`}
+      accessibilityLabel={`${name} planet, ${size}px diameter, orbiting at ${distance}px from the Sun`}
     />
   );
 };

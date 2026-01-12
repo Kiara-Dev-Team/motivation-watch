@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useMemo} from 'react';
 import {
   View,
   StyleSheet,
@@ -72,16 +72,16 @@ const SolarSystemView: React.FC = () => {
     };
   });
 
-  // Render stars in the background
-  const renderStars = useCallback(() => {
-    const stars = [];
+  // Render stars in the background - memoized to prevent recreation on every render
+  const stars = useMemo(() => {
+    const starElements = [];
     for (let i = 0; i < 100; i++) {
       const starSize = Math.random() * 2 + 1;
       const starX = Math.random() * width;
       const starY = Math.random() * height;
       const opacity = Math.random() * 0.5 + 0.3;
 
-      stars.push(
+      starElements.push(
         <View
           key={`star-${i}`}
           style={[
@@ -97,7 +97,7 @@ const SolarSystemView: React.FC = () => {
         />,
       );
     }
-    return stars;
+    return starElements;
   }, []);
 
   return (
@@ -105,7 +105,7 @@ const SolarSystemView: React.FC = () => {
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
       {/* Background stars */}
-      <View style={styles.starsContainer}>{renderStars()}</View>
+      <View style={styles.starsContainer}>{stars}</View>
 
       {/* Header text */}
       <View style={styles.header}>
