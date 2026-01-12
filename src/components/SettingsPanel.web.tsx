@@ -15,6 +15,7 @@ export interface Settings {
   breakDuration: number; // in minutes
   showOrbits: boolean;
   starDensity: number; // 0-100
+  backgroundMusic: boolean;
 }
 
 interface SettingsPanelProps {
@@ -29,6 +30,7 @@ const DEFAULT_SETTINGS: Settings = {
   breakDuration: 5,
   showOrbits: true,
   starDensity: 100,
+  backgroundMusic: false,
 };
 
 /**
@@ -127,9 +129,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </View>
             </View>
 
-            {/* Visual Settings */}
+            {/* Visual & Audio Settings */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Visual</Text>
+              <Text style={styles.sectionTitle}>Visual & Audio</Text>
 
               <View style={styles.setting}>
                 <Text style={styles.label}>Show Orbital Paths</Text>
@@ -152,6 +154,33 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       style={[
                         styles.toggleThumb,
                         localSettings.showOrbits && styles.toggleThumbActive,
+                      ]}
+                    />
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.setting}>
+                <Text style={styles.label}>Background Music</Text>
+                <TouchableOpacity
+                  style={styles.toggle}
+                  onPress={() =>
+                    setLocalSettings({
+                      ...localSettings,
+                      backgroundMusic: !localSettings.backgroundMusic,
+                    })
+                  }
+                >
+                  <View
+                    style={[
+                      styles.toggleTrack,
+                      localSettings.backgroundMusic && styles.toggleTrackActive,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.toggleThumb,
+                        localSettings.backgroundMusic && styles.toggleThumbActive,
                       ]}
                     />
                   </View>

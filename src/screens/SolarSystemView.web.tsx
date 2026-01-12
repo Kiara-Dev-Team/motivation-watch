@@ -11,6 +11,7 @@ import PlanetWeb from '../components/Planet.web';
 import OrbitPath from '../components/OrbitPath';
 import PomodoroTimer from '../components/PomodoroTimer';
 import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel.web';
+import BackgroundMusic from '../components/BackgroundMusic';
 
 const {width, height} = Dimensions.get('window');
 const CENTER_X = width / 2;
@@ -163,6 +164,9 @@ const SolarSystemView: React.FC = () => {
       >
         <Text style={styles.gearIcon}>⚙️</Text>
       </TouchableOpacity>
+
+      {/* Background Music Controls */}
+      <BackgroundMusic enabled={settings.backgroundMusic} volume={0.3} />
 
       {/* Pomodoro Timer - Bottom Right */}
       <View style={styles.timerContainer}>
