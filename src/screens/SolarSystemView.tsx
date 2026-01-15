@@ -19,10 +19,6 @@ import OrbitPath from '../components/OrbitPath';
 import PomodoroTimer from '../components/PomodoroTimer';
 import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel';
 
-const {width, height} = Dimensions.get('window');
-const CENTER_X = width / 2;
-const CENTER_Y = height / 2;
-
 // Planet data: name, size, color, distance from sun, orbital period (seconds)
 // Distances and speeds are scaled for mobile screen visualization
 const PLANETS = [
@@ -54,6 +50,9 @@ const SolarSystemView: React.FC = () => {
   // Settings state
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsPanelVisible, setSettingsPanelVisible] = useState(false);
+
+  // Dynamic dimensions state - will be set by onLayout
+  const [dimensions, setDimensions] = useState({width: 0, height: 0});
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -101,8 +100,8 @@ const SolarSystemView: React.FC = () => {
     const starElements = [];
     for (let i = 0; i < 100; i++) {
       const starSize = Math.random() * 2 + 1;
-      const starX = Math.random() * width;
-      const starY = Math.random() * height;
+      const starX = Math.random() * dimensions.width;
+      const starY = Math.random() * dimensions.height;
       const opacity = Math.random() * 0.5 + 0.3;
 
       starElements.push(
@@ -122,10 +121,16 @@ const SolarSystemView: React.FC = () => {
       );
     }
     return starElements;
-  }, []);
+  }, [dimensions]);
+
+  // Handle container layout to get actual dimensions inside SafeAreaView
+  const handleLayout = (event: any) => {
+    const {width, height} = event.nativeEvent.layout;
+    setDimensions({width, height});
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} onLayout={handleLayout}>
       {typeof StatusBar !== 'undefined' && <StatusBar barStyle="light-content" backgroundColor="#000000" />}
 
       {/* Background stars */}
@@ -144,8 +149,8 @@ const SolarSystemView: React.FC = () => {
             style={[
               styles.solarSystemContainer,
               {
-                left: CENTER_X,
-                top: CENTER_Y,
+                left: dimensions.width / 2,
+                top: dimensions.height / 2,
               },
               animatedStyle,
             ]}>
