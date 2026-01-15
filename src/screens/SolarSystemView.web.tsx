@@ -13,10 +13,6 @@ import PomodoroTimer from '../components/PomodoroTimer';
 import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel.web';
 import BackgroundMusic from '../components/BackgroundMusic';
 
-const {width, height} = Dimensions.get('window');
-const CENTER_X = width / 2;
-const CENTER_Y = height / 2;
-
 // Planet data: name, size, color, distance from sun, orbital period (seconds)
 const PLANETS = [
   {name: 'Mercury', size: 8, color: '#8C7853', distance: 40, speed: 12},
@@ -46,6 +42,12 @@ const SolarSystemView: React.FC = () => {
   const [settingsPanelVisible, setSettingsPanelVisible] = useState(false);
   const [scale, setScale] = useState(1);
 
+  // Dynamic dimensions state
+  const [dimensions, setDimensions] = useState(() => {
+    const {width, height} = Dimensions.get('window');
+    return {width, height};
+  });
+
   // Load settings from localStorage on mount
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
@@ -57,6 +59,19 @@ const SolarSystemView: React.FC = () => {
           console.error('Failed to load settings:', e);
         }
       }
+    }
+  }, []);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const {width, height} = Dimensions.get('window');
+      setDimensions({width, height});
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
 
@@ -73,8 +88,8 @@ const SolarSystemView: React.FC = () => {
     const starElements = [];
     for (let i = 0; i < 100; i++) {
       const starSize = Math.random() * 2 + 1;
-      const starX = Math.random() * width;
-      const starY = Math.random() * height;
+      const starX = Math.random() * dimensions.width;
+      const starY = Math.random() * dimensions.height;
       const opacity = Math.random() * 0.5 + 0.3;
 
       starElements.push(
@@ -94,7 +109,7 @@ const SolarSystemView: React.FC = () => {
       );
     }
     return starElements;
-  }, []);
+  }, [dimensions]);
 
   return (
     <View style={styles.container}>
@@ -124,8 +139,8 @@ const SolarSystemView: React.FC = () => {
             styles.solarSystemContainer,
             {
               transform: [{scale}],
-              left: CENTER_X,
-              top: CENTER_Y,
+              left: dimensions.width / 2,
+              top: dimensions.height / 2,
             },
           ]}
           onWheel={handleWheel}
