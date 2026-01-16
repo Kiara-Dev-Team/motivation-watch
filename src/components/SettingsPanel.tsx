@@ -20,6 +20,7 @@ export interface Settings {
   breakDuration: number; // in minutes
   showOrbits: boolean;
   starDensity: number; // 0-100
+  backgroundMusic: boolean;
 }
 
 interface SettingsPanelProps {
@@ -34,6 +35,7 @@ const DEFAULT_SETTINGS: Settings = {
   breakDuration: 5,
   showOrbits: true,
   starDensity: 100,
+  backgroundMusic: false,
 };
 
 /**
@@ -52,6 +54,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onSettingsChange,
 }) => {
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
+  const [workDurationText, setWorkDurationText] = useState(settings.workDuration.toString());
+  const [breakDurationText, setBreakDurationText] = useState(settings.breakDuration.toString());
   const slideAnim = useSharedValue(visible ? 0 : -400);
 
   useEffect(() => {
@@ -68,17 +72,32 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   });
 
   const handleSave = () => {
-    onSettingsChange(localSettings);
+    // Parse text values before saving
+    const workDuration = parseInt(workDurationText) || 1;
+    const breakDuration = parseInt(breakDurationText) || 1;
+
+    const finalSettings = {
+      ...localSettings,
+      workDuration: Math.max(1, Math.min(60, workDuration)),
+      breakDuration: Math.max(1, Math.min(30, breakDuration)),
+    };
+
+    onSettingsChange(finalSettings);
     // Persist to localStorage (web only)
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('motivationWatchSettings', JSON.stringify(localSettings));
+      localStorage.setItem('motivationWatchSettings', JSON.stringify(finalSettings));
     }
     onClose();
   };
 
   const handleReset = () => {
     setLocalSettings(DEFAULT_SETTINGS);
+    setWorkDurationText(DEFAULT_SETTINGS.workDuration.toString());
+    setBreakDurationText(DEFAULT_SETTINGS.breakDuration.toString());
   };
+
+  // Check if save button should be disabled
+  const isSaveDisabled = workDurationText.trim() === '' || breakDurationText.trim() === '';
 
   return (
     <Modal
@@ -111,13 +130,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <Text style={styles.label}>Work Duration (minutes)</Text>
                 <TextInput
                   style={styles.input}
-                  value={localSettings.workDuration.toString()}
-                  onChangeText={(text) => {
-                    const num = parseInt(text) || 1;
-                    setLocalSettings({...localSettings, workDuration: Math.max(1, Math.min(60, num))});
-                  }}
+                  value={workDurationText}
+                  onChangeText={setWorkDurationText}
                   keyboardType="numeric"
                   maxLength={2}
+                  placeholder="1-60"
                 />
               </View>
 
@@ -125,20 +142,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <Text style={styles.label}>Break Duration (minutes)</Text>
                 <TextInput
                   style={styles.input}
-                  value={localSettings.breakDuration.toString()}
-                  onChangeText={(text) => {
-                    const num = parseInt(text) || 1;
-                    setLocalSettings({...localSettings, breakDuration: Math.max(1, Math.min(30, num))});
-                  }}
+                  value={breakDurationText}
+                  onChangeText={setBreakDurationText}
                   keyboardType="numeric"
                   maxLength={2}
+                  placeholder="1-30"
                 />
               </View>
             </View>
 
-            {/* Visual Settings */}
+            {/* Visual & Audio Settings */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Visual</Text>
+              <Text style={styles.sectionTitle}>Visual & Audio</Text>
 
               <View style={styles.setting}>
                 <Text style={styles.label}>Show Orbital Paths</Text>
@@ -151,6 +166,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </View>
                 </TouchableOpacity>
               </View>
+
+              <View style={styles.setting}>
+                <Text style={styles.label}>Background Music</Text>
+                <TouchableOpacity
+                  style={styles.toggle}
+                  onPress={() => setLocalSettings({...localSettings, backgroundMusic: !localSettings.backgroundMusic})}
+                >
+                  <View style={[styles.toggleTrack, localSettings.backgroundMusic && styles.toggleTrackActive]}>
+                    <View style={[styles.toggleThumb, localSettings.backgroundMusic && styles.toggleThumbActive]} />
+                  </View>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Action Buttons */}
@@ -159,7 +186,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <Text style={styles.secondaryButtonText}>Reset to Default</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.primaryButton} onPress={handleSave}>
+              <TouchableOpacity
+                style={[styles.primaryButton, isSaveDisabled && styles.disabledButton]}
+                onPress={handleSave}
+                disabled={isSaveDisabled}
+              >
                 <Text style={styles.primaryButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -287,6 +318,10 @@ const styles = StyleSheet.create({
     color: '#CCCCCC',
     fontSize: 16,
     fontWeight: '600',
+  },
+  disabledButton: {
+    backgroundColor: '#666666',
+    opacity: 0.5,
   },
 });
 

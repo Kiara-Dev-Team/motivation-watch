@@ -52,9 +52,10 @@ const Planet: React.FC<PlanetProps> = ({
 
   // Calculate planet position based on angle and distance
   // Using circular orbit: x = cos(angle) * distance, y = sin(angle) * distance
+  // Offset by half the planet size to center it on the orbit
   const animatedStyle = useAnimatedStyle(() => {
-    const x = Math.cos(angle.value) * distance;
-    const y = Math.sin(angle.value) * distance;
+    const x = Math.cos(angle.value) * distance - size / 2;
+    const y = Math.sin(angle.value) * distance - size / 2;
 
     return {
       transform: [

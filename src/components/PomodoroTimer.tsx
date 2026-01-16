@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Platform} from 'react-native';
 
 interface PomodoroTimerProps {
   workDuration?: number; // in minutes, default 25
@@ -211,19 +211,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 15,
   },
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    backgroundColor: 'transparent',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
+  button: Platform.select({
+    ios: {
+      paddingVertical: 14,
+      paddingHorizontal: 40,
+      borderRadius: 12,
+      backgroundColor: '#007AFF',
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 4,
+    },
+    android: {
+      paddingVertical: 14,
+      paddingHorizontal: 40,
+      borderRadius: 12,
+      backgroundColor: '#007AFF',
+      elevation: 4,
+    },
+    default: {
+      paddingVertical: 12,
+      paddingHorizontal: 30,
+      borderWidth: 3,
+      borderColor: '#FFFFFF',
+      backgroundColor: 'transparent',
+    },
+  }),
+  buttonText: Platform.select({
+    ios: {
+      color: '#FFFFFF',
+      fontSize: 17,
+      fontWeight: '600',
+      letterSpacing: 0.5,
+    },
+    android: {
+      color: '#FFFFFF',
+      fontSize: 17,
+      fontWeight: '600',
+      letterSpacing: 0.5,
+    },
+    default: {
+      color: '#FFFFFF',
+      fontSize: 18,
+      fontWeight: '700',
+      letterSpacing: 1,
+    },
+  }),
 });
 
 export default PomodoroTimer;
