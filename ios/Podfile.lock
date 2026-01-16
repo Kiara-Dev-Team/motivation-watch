@@ -886,6 +886,9 @@ PODS:
   - React-Mapbuffer (0.73.2):
     - glog
     - React-debug
+  - react-native-track-player (4.1.2):
+    - React-Core
+    - SwiftAudioEx (= 1.1.0)
   - React-nativeconfig (0.73.2)
   - React-NativeModulesApple (0.73.2):
     - glog
@@ -1062,7 +1065,12 @@ PODS:
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
     - ReactCommon/turbomodule/core
+  - RNVectorIcons (10.3.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
   - SocketRocket (0.6.1)
+  - SwiftAudioEx (1.1.0)
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -1096,6 +1104,7 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector-modern`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
+  - react-native-track-player (from `../node_modules/react-native-track-player`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -1118,6 +1127,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
+  - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1125,6 +1135,7 @@ SPEC REPOS:
     - fmt
     - libevent
     - SocketRocket
+    - SwiftAudioEx
 
 EXTERNAL SOURCES:
   boost:
@@ -1182,6 +1193,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
+  react-native-track-player:
+    :path: "../node_modules/react-native-track-player"
   React-nativeconfig:
     :path: "../node_modules/react-native/ReactCommon"
   React-NativeModulesApple:
@@ -1226,6 +1239,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-gesture-handler"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
+  RNVectorIcons:
+    :path: "../node_modules/react-native-vector-icons"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -1259,6 +1274,7 @@ SPEC CHECKSUMS:
   React-jsinspector: 03644c063fc3621c9a4e8bf263a8150909129618
   React-logger: b42a493ae72922d8d6a497038359240ffd457119
   React-Mapbuffer: 2cd1af67c3754dfb934948448125f0e051586db7
+  react-native-track-player: dd56f9948e03756a217c75e0a61aa04aab65b5a1
   React-nativeconfig: d753fbbc8cecc8ae413d615599ac378bbf6999bb
   React-NativeModulesApple: 4cc974c51ebc4911173bbe5d5897ad55ebc8b90f
   React-perflogger: 29efe63b7ef5fbaaa50ef6eaa92482f98a24b97e
@@ -1281,7 +1297,9 @@ SPEC CHECKSUMS:
   ReactCommon: 35e3b6a1c75d462acb0155e38e627b98d5bf586b
   RNGestureHandler: f1c8544c074f74911e713ede852b07c51c0cf8f2
   RNReanimated: 442237ccdfc5f44e3498b6aaa85590b65f968b25
+  RNVectorIcons: 87d954b745b517a6676a853c0eb43679d96c74ef
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
+  SwiftAudioEx: f6aa653770f3a0d3851edaf8d834a30aee4a7646
   Yoga: 13c8ef87792450193e117976337b8527b49e8c03
 
 PODFILE CHECKSUM: 520fab523fc251ac800fddcce005b2fc61ed5faf

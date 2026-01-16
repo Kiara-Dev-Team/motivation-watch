@@ -18,6 +18,7 @@ import Planet from '../components/Planet';
 import OrbitPath from '../components/OrbitPath';
 import PomodoroTimer from '../components/PomodoroTimer';
 import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel';
+import BackgroundMusic from '../components/BackgroundMusic';
 
 // Planet data: name, size, color, distance from sun, orbital period (seconds)
 // Distances and speeds are scaled for mobile screen visualization
@@ -53,6 +54,9 @@ const SolarSystemView: React.FC = () => {
 
   // Dynamic dimensions state - will be set by onLayout
   const [dimensions, setDimensions] = useState({width: 0, height: 0});
+
+  // Determine if in landscape mode
+  const isLandscape = dimensions.width > dimensions.height;
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -149,8 +153,12 @@ const SolarSystemView: React.FC = () => {
             style={[
               styles.solarSystemContainer,
               {
-                left: dimensions.width / 2,
-                top: dimensions.height / 2,
+                left: isLandscape
+                  ? (dimensions.width - 250) / 2  // In landscape, account for right side UI
+                  : dimensions.width / 2,
+                top: isLandscape
+                  ? dimensions.height / 2  // In landscape, simple center vertically
+                  : 120 + (dimensions.height - 400) / 2, // In portrait, account for header/timer
               },
               animatedStyle,
             ]}>
@@ -180,14 +188,24 @@ const SolarSystemView: React.FC = () => {
         </Animated.View>
       </GestureDetector>
 
-      {/* Settings Gear Icon - Bottom Left */}
-      <TouchableOpacity
-        style={styles.settingsIcon}
-        onPress={() => setSettingsPanelVisible(true)}
-        accessibilityLabel="Open settings"
-      >
-        <Text style={styles.gearIcon}>⚙️</Text>
-      </TouchableOpacity>
+      {/* Top Right Controls */}
+      <View style={styles.topRightControls}>
+        {/* Settings Icon */}
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setSettingsPanelVisible(true)}
+          accessibilityLabel="Open settings"
+        >
+          <View style={styles.settingsIcon}>
+            <View style={styles.settingsLine} />
+            <View style={styles.settingsLine} />
+            <View style={styles.settingsLine} />
+          </View>
+        </TouchableOpacity>
+
+        {/* Background Music Controls */}
+        <BackgroundMusic enabled={settings.backgroundMusic} volume={0.3} />
+      </View>
 
       {/* Pomodoro Timer - Bottom Right */}
       <View style={styles.timerContainer}>
@@ -276,19 +294,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 30,
   },
-  settingsIcon: {
+  topRightControls: {
     position: 'absolute',
-    bottom: 40,
-    left: 40,
-    width: 50,
-    height: 50,
+    top: 60,
+    right: 20,
+    flexDirection: 'row',
+    gap: 12,
     zIndex: 100,
-    opacity: 0.7,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 22,
   },
-  gearIcon: {
-    fontSize: 40,
+  settingsIcon: {
+    width: 20,
+    height: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingsLine: {
+    width: 20,
+    height: 2.5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 1.25,
   },
   timerContainer: {
     position: 'absolute',
