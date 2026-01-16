@@ -58,6 +58,14 @@ const SolarSystemView: React.FC = () => {
   // Determine if in landscape mode
   const isLandscape = dimensions.width > dimensions.height;
 
+  // Dynamic UI spacing based on screen size
+  const headerHeight = 60; // Top position of header
+  const titleHeight = 28; // Approximate height of title text
+  const timerWidth = 250; // Approximate width of timer component
+  const topControlsHeight = 104; // 60 (top) + 44 (button height)
+  const bottomPadding = 40; // Bottom padding for timer
+  const timerHeight = 200; // Approximate height of timer component
+
   // Load settings from localStorage on mount
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
@@ -142,8 +150,7 @@ const SolarSystemView: React.FC = () => {
 
       {/* Header text */}
       <View style={styles.header}>
-        <Text style={styles.title}>Solar System - Top View</Text>
-        <Text style={styles.subtitle}>Pinch to zoom</Text>
+        <Text style={styles.title}>DeepZen</Text>
       </View>
 
       {/* Solar System with pinch-to-zoom gesture */}
@@ -154,11 +161,11 @@ const SolarSystemView: React.FC = () => {
               styles.solarSystemContainer,
               {
                 left: isLandscape
-                  ? (dimensions.width - 250) / 2  // In landscape, account for right side UI
-                  : dimensions.width / 2,
+                  ? (dimensions.width - timerWidth) / 2  // In landscape, center with timer on right
+                  : dimensions.width / 2,  // In portrait, simple horizontal center
                 top: isLandscape
-                  ? dimensions.height / 2  // In landscape, simple center vertically
-                  : 120 + (dimensions.height - 400) / 2, // In portrait, account for header/timer
+                  ? dimensions.height / 2  // In landscape, simple vertical center
+                  : topControlsHeight + (dimensions.height - topControlsHeight - bottomPadding - timerHeight) / 2, // In portrait, center in available space
               },
               animatedStyle,
             ]}>
