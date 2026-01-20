@@ -18,10 +18,7 @@ import Planet from '../components/Planet';
 import OrbitPath from '../components/OrbitPath';
 import PomodoroTimer from '../components/PomodoroTimer';
 import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel';
-
-const {width, height} = Dimensions.get('window');
-const CENTER_X = width / 2;
-const CENTER_Y = height / 2;
+import BackgroundMusic from '../components/BackgroundMusic';
 
 // Planet data: name, size, color, distance from sun, orbital period (seconds)
 // Distances and speeds are scaled for mobile screen visualization
@@ -54,6 +51,20 @@ const SolarSystemView: React.FC = () => {
   // Settings state
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [settingsPanelVisible, setSettingsPanelVisible] = useState(false);
+
+  // Dynamic dimensions state - will be set by onLayout
+  const [dimensions, setDimensions] = useState({width: 0, height: 0});
+
+  // Determine if in landscape mode
+  const isLandscape = dimensions.width > dimensions.height;
+
+  // Dynamic UI spacing based on screen size
+  const headerHeight = 60; // Top position of header
+  const titleHeight = 28; // Approximate height of title text
+  const timerWidth = 250; // Approximate width of timer component
+  const topControlsHeight = 104; // 60 (top) + 44 (button height)
+  const bottomPadding = 40; // Bottom padding for timer
+  const timerHeight = 200; // Approximate height of timer component
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -101,8 +112,8 @@ const SolarSystemView: React.FC = () => {
     const starElements = [];
     for (let i = 0; i < 100; i++) {
       const starSize = Math.random() * 2 + 1;
-      const starX = Math.random() * width;
-      const starY = Math.random() * height;
+      const starX = Math.random() * dimensions.width;
+      const starY = Math.random() * dimensions.height;
       const opacity = Math.random() * 0.5 + 0.3;
 
       starElements.push(
@@ -122,10 +133,16 @@ const SolarSystemView: React.FC = () => {
       );
     }
     return starElements;
-  }, []);
+  }, [dimensions]);
+
+  // Handle container layout to get actual dimensions inside SafeAreaView
+  const handleLayout = (event: any) => {
+    const {width, height} = event.nativeEvent.layout;
+    setDimensions({width, height});
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} onLayout={handleLayout}>
       {typeof StatusBar !== 'undefined' && <StatusBar barStyle="light-content" backgroundColor="#000000" />}
 
       {/* Background stars */}
@@ -133,8 +150,7 @@ const SolarSystemView: React.FC = () => {
 
       {/* Header text */}
       <View style={styles.header}>
-        <Text style={styles.title}>Solar System - Top View</Text>
-        <Text style={styles.subtitle}>Pinch to zoom</Text>
+        <Text style={styles.title}>DeepZen</Text>
       </View>
 
       {/* Solar System with pinch-to-zoom gesture */}
@@ -144,8 +160,12 @@ const SolarSystemView: React.FC = () => {
             style={[
               styles.solarSystemContainer,
               {
-                left: CENTER_X,
-                top: CENTER_Y,
+                left: isLandscape
+                  ? (dimensions.width - timerWidth) / 2  // In landscape, center with timer on right
+                  : dimensions.width / 2,  // In portrait, simple horizontal center
+                top: isLandscape
+                  ? dimensions.height / 2  // In landscape, simple vertical center
+                  : topControlsHeight + (dimensions.height - topControlsHeight - bottomPadding - timerHeight) / 2, // In portrait, center in available space
               },
               animatedStyle,
             ]}>
@@ -175,14 +195,24 @@ const SolarSystemView: React.FC = () => {
         </Animated.View>
       </GestureDetector>
 
-      {/* Settings Gear Icon - Bottom Left */}
-      <TouchableOpacity
-        style={styles.settingsIcon}
-        onPress={() => setSettingsPanelVisible(true)}
-        accessibilityLabel="Open settings"
-      >
-        <Text style={styles.gearIcon}>⚙️</Text>
-      </TouchableOpacity>
+      {/* Top Right Controls */}
+      <View style={styles.topRightControls}>
+        {/* Settings Icon */}
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setSettingsPanelVisible(true)}
+          accessibilityLabel="Open settings"
+        >
+          <View style={styles.settingsIcon}>
+            <View style={styles.settingsLine} />
+            <View style={styles.settingsLine} />
+            <View style={styles.settingsLine} />
+          </View>
+        </TouchableOpacity>
+
+        {/* Background Music Controls */}
+        <BackgroundMusic enabled={settings.backgroundMusic} volume={0.3} />
+      </View>
 
       {/* Pomodoro Timer - Bottom Right */}
       <View style={styles.timerContainer}>
@@ -271,19 +301,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 30,
   },
-  settingsIcon: {
+  topRightControls: {
     position: 'absolute',
-    bottom: 40,
-    left: 40,
-    width: 50,
-    height: 50,
+    top: 60,
+    right: 20,
+    flexDirection: 'row',
+    gap: 12,
     zIndex: 100,
-    opacity: 0.7,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 22,
   },
-  gearIcon: {
-    fontSize: 40,
+  settingsIcon: {
+    width: 20,
+    height: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingsLine: {
+    width: 20,
+    height: 2.5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 1.25,
   },
   timerContainer: {
     position: 'absolute',
