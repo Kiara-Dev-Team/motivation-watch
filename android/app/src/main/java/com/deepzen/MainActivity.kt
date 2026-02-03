@@ -1,5 +1,7 @@
 package com.deepzen
 
+import android.os.Bundle
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -12,6 +14,16 @@ class MainActivity : ReactActivity() {
    * rendering of the component.
    */
   override fun getMainComponentName(): String = "MotivationWatch"
+
+  /**
+   * Called when the activity is starting. Install splash screen and switch to app theme.
+   */
+  override fun onCreate(savedInstanceState: Bundle?) {
+    // Install splash screen before calling super.onCreate
+    installSplashScreen()
+    setTheme(R.style.AppTheme)
+    super.onCreate(savedInstanceState)
+  }
 
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
