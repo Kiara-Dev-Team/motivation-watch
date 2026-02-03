@@ -396,14 +396,16 @@ const SolarSystemView: React.FC = () => {
       </View>
 
       {/* Pomodoro Timer - Responsive positioning */}
-      <View style={[styles.timerContainer, isLandscape && styles.timerContainerLandscape]}>
-        <PomodoroTimer
-          workDuration={settings.workDuration}
-          breakDuration={settings.breakDuration}
-          onComplete={() => {
-            console.log('Timer completed!');
-          }}
-        />
+      <View style={[styles.timerContainer, isLandscape && styles.timerContainerLandscape]} pointerEvents="box-none">
+        <View pointerEvents="auto">
+          <PomodoroTimer
+            workDuration={settings.workDuration}
+            breakDuration={settings.breakDuration}
+            onComplete={() => {
+              console.log('Timer completed!');
+            }}
+          />
+        </View>
       </View>
 
       {/* Settings Panel */}
@@ -604,7 +606,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     transform: [{translateX: 0}],
-    zIndex: 180,
+    zIndex: 210,
   },
 });
 
