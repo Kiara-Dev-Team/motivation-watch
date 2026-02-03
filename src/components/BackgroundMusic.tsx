@@ -67,9 +67,16 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       }
 
       try {
-        await TrackPlayer.setupPlayer();
+        await TrackPlayer.setupPlayer({
+          autoUpdateMetadata: true,
+          autoHandleInterruptions: true,
+        });
+        console.log('TrackPlayer setup complete');
 
         await TrackPlayer.updateOptions({
+          android: {
+            appKilledPlaybackBehavior: 2, // Continue playing
+          },
           capabilities: [
             Capability.Play,
             Capability.Pause,
@@ -78,12 +85,19 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
           ],
           compactCapabilities: [Capability.Play, Capability.Pause],
         });
+        console.log('TrackPlayer options updated');
 
         await TrackPlayer.setRepeatMode(RepeatMode.Queue);
-        await TrackPlayer.setVolume(volume);
+        console.log('TrackPlayer repeat mode set');
+
+        await TrackPlayer.setVolume(1.0); // Set to maximum volume for testing
+        console.log('TrackPlayer volume set to 1.0');
+
         await TrackPlayer.add(PLAYLIST);
+        console.log('TrackPlayer playlist added:', PLAYLIST.length, 'tracks');
 
         setIsPlayerReady(true);
+        console.log('TrackPlayer ready');
       } catch (error) {
         console.error('Failed to setup player:', error);
       }
@@ -106,14 +120,31 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     const handlePlayback = async () => {
       try {
         const state = await TrackPlayer.getPlaybackState();
+        console.log('Current playback state:', state);
 
         if (enabled) {
+          console.log('Music enabled, attempting to play...');
           if (state.state !== State.Playing) {
+            // Get current track info
+            const currentTrack = await TrackPlayer.getActiveTrackIndex();
+            const queue = await TrackPlayer.getQueue();
+            console.log('Current track index:', currentTrack);
+            console.log('Queue length:', queue.length);
+
             await TrackPlayer.play();
+            console.log('TrackPlayer.play() called');
+
+            // Verify it's actually playing
+            const newState = await TrackPlayer.getPlaybackState();
+            const volume = await TrackPlayer.getVolume();
+            console.log('New playback state after play:', newState);
+            console.log('Current volume:', volume);
           }
         } else {
+          console.log('Music disabled, attempting to pause...');
           if (state.state === State.Playing) {
             await TrackPlayer.pause();
+            console.log('TrackPlayer.pause() called');
           }
         }
       } catch (error) {

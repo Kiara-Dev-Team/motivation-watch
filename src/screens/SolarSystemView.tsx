@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 import Svg, {Circle, Defs, RadialGradient, Stop, G, Text as SvgText} from 'react-native-svg';
 import PomodoroTimer from '../components/PomodoroTimer';
 import SettingsPanel, {Settings, DEFAULT_SETTINGS} from '../components/SettingsPanel';
@@ -67,18 +66,14 @@ const SolarSystemView: React.FC = () => {
 
   // Animation state
   const [time, setTime] = useState(0);
-  const [speed, setSpeed] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
 
   // UI state
   const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
-  const [showOrbits, setShowOrbits] = useState(true);
-  const [showLabels, setShowLabels] = useState(true);
-  const [zoom, setZoom] = useState(1);
-  const [showAsteroidBelt, setShowAsteroidBelt] = useState(true);
 
   // Dynamic dimensions state
   const [dimensions, setDimensions] = useState({width: 0, height: 0});
+  const isLandscape = dimensions.width > dimensions.height;
 
   // Load settings from AsyncStorage/localStorage on mount
   useEffect(() => {
@@ -86,11 +81,19 @@ const SolarSystemView: React.FC = () => {
       const savedSettings = localStorage.getItem('motivationWatchSettings');
       if (savedSettings) {
         try {
-          setSettings(JSON.parse(savedSettings));
+          const parsed = JSON.parse(savedSettings);
+          // Merge saved settings with defaults to ensure new fields exist
+          setSettings({...DEFAULT_SETTINGS, ...parsed});
         } catch (e) {
           console.error('Failed to load settings:', e);
+          setSettings(DEFAULT_SETTINGS);
         }
+      } else {
+        // No saved settings, use defaults
+        setSettings(DEFAULT_SETTINGS);
       }
+    } else {
+      setSettings(DEFAULT_SETTINGS);
     }
   }, []);
 
@@ -98,10 +101,10 @@ const SolarSystemView: React.FC = () => {
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
-      setTime(t => t + 0.008 * speed);
+      setTime(t => t + 0.008 * settings.speed);
     }, 16);
     return () => clearInterval(interval);
-  }, [isPaused, speed]);
+  }, [isPaused, settings.speed]);
 
   // Generate asteroid belt
   const asteroids = useMemo(
@@ -129,14 +132,15 @@ const SolarSystemView: React.FC = () => {
   );
 
   const viewBox = useMemo(() => {
-    const size = 500 / zoom;
+    const size = 500 / settings.zoom;
     return `-${size} -${size} ${size * 2} ${size * 2}`;
-  }, [zoom]);
+  }, [settings.zoom]);
 
   // Handle container layout to get actual dimensions inside SafeAreaView
   const handleLayout = (event: any) => {
     const {width, height} = event.nativeEvent.layout;
     setDimensions({width, height});
+    console.log('Layout dimensions:', width, height, 'isLandscape:', width > height);
   };
 
   return (
@@ -144,7 +148,7 @@ const SolarSystemView: React.FC = () => {
       {typeof StatusBar !== 'undefined' && <StatusBar barStyle="light-content" backgroundColor="#000000" />}
 
       {/* Star background */}
-      <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+      <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
         {stars.map((star, i) => (
           <Circle
             key={i}
@@ -158,7 +162,7 @@ const SolarSystemView: React.FC = () => {
       </Svg>
 
       {/* Main Solar System */}
-      <Svg width="100%" height="100%" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" style={StyleSheet.absoluteFill}>
+      <Svg width="100%" height="100%" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <Defs>
           {/* Sun gradients */}
           <RadialGradient id="sunCore">
@@ -190,7 +194,7 @@ const SolarSystemView: React.FC = () => {
         </Defs>
 
         {/* Orbit paths */}
-        {showOrbits &&
+        {settings.showOrbits &&
           PLANETS.map(planet => {
             const orbitRadius = scaleDistance(planet.distance);
             const isSelected = selectedPlanet?.name === planet.name;
@@ -210,7 +214,7 @@ const SolarSystemView: React.FC = () => {
           })}
 
         {/* Asteroid belt */}
-        {showAsteroidBelt &&
+        {settings.showAsteroidBelt &&
           asteroids.map((asteroid, i) => {
             const angle = asteroid.angle + time * asteroid.speed;
             const x = Math.cos(angle) * asteroid.distance;
@@ -288,7 +292,7 @@ const SolarSystemView: React.FC = () => {
                 />
               )}
 
-              {showLabels && (
+              {settings.showLabels && (
                 <SvgText
                   x={x}
                   y={y - displaySize - 6}
@@ -305,67 +309,9 @@ const SolarSystemView: React.FC = () => {
         })}
       </Svg>
 
-      {/* Control Panel */}
-      <View style={styles.controlPanel}>
-        <Text style={styles.controlTitle}>DeepZen</Text>
-        <Text style={styles.controlSubtitle}>Top-down view (90° above ecliptic)</Text>
-
-        <View style={styles.controlsContainer}>
-          {/* Play/Pause */}
-          <View style={styles.playSpeedRow}>
-            <TouchableOpacity style={styles.playButton} onPress={() => setIsPaused(!isPaused)}>
-              <Text style={styles.playButtonText}>{isPaused ? '▶' : '⏸'}</Text>
-            </TouchableOpacity>
-            <View style={styles.sliderContainer}>
-              <Text style={styles.sliderLabel}>Speed: {speed.toFixed(1)}×</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={0.1}
-                maximumValue={10}
-                step={0.1}
-                value={speed}
-                onValueChange={setSpeed}
-                minimumTrackTintColor="#3B82F6"
-                maximumTrackTintColor="#4B5563"
-              />
-            </View>
-          </View>
-
-          {/* Zoom */}
-          <View style={styles.sliderWrapper}>
-            <Text style={styles.sliderLabel}>Zoom: {zoom.toFixed(1)}×</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={0.3}
-              maximumValue={3}
-              step={0.1}
-              value={zoom}
-              onValueChange={setZoom}
-              minimumTrackTintColor="#3B82F6"
-              maximumTrackTintColor="#4B5563"
-            />
-          </View>
-
-          {/* Toggles */}
-          <View style={styles.toggleRow}>
-            <TouchableOpacity style={[styles.toggleButton, showOrbits && styles.toggleButtonActive]} onPress={() => setShowOrbits(!showOrbits)}>
-              <Text style={[styles.toggleText, showOrbits && styles.toggleTextActive]}>Orbits</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.toggleButton, showLabels && styles.toggleButtonActive]} onPress={() => setShowLabels(!showLabels)}>
-              <Text style={[styles.toggleText, showLabels && styles.toggleTextActive]}>Labels</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleButton, showAsteroidBelt && styles.toggleButtonActive]}
-              onPress={() => setShowAsteroidBelt(!showAsteroidBelt)}>
-              <Text style={[styles.toggleText, showAsteroidBelt && styles.toggleTextActive]}>Asteroids</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
       {/* Planet Info Panel */}
       {selectedPlanet && (
-        <ScrollView style={styles.infoPanel}>
+        <ScrollView style={[styles.infoPanel, isLandscape && styles.infoPanelLandscape]}>
           <View style={styles.infoPanelHeader}>
             <View style={styles.infoPanelTitleRow}>
               <View style={[styles.planetBadge, {backgroundColor: selectedPlanet.color}]} />
@@ -409,8 +355,8 @@ const SolarSystemView: React.FC = () => {
       )}
 
       {/* Planet Quick Select */}
-      <View style={styles.quickSelect}>
-        <View style={styles.quickSelectInner}>
+      <View style={[styles.quickSelect, isLandscape && styles.quickSelectLandscape]} pointerEvents="box-none">
+        <View style={styles.quickSelectInner} pointerEvents="auto">
           <Text style={styles.sunEmoji}>☀</Text>
           {PLANETS.map(planet => {
             const isSelected = selectedPlanet?.name === planet.name;
@@ -429,20 +375,28 @@ const SolarSystemView: React.FC = () => {
         </View>
       </View>
 
-      {/* Settings Icon - Top Right */}
-      <TouchableOpacity style={styles.settingsIcon} onPress={() => setSettingsPanelVisible(true)}>
-        <View style={styles.settingsIconInner}>
-          <View style={styles.settingsLine} />
-          <View style={styles.settingsLine} />
-          <View style={styles.settingsLine} />
-        </View>
-      </TouchableOpacity>
+      {/* Top Right Controls */}
+      <View style={styles.topRightControls}>
+        {/* Background Music Controls */}
+        <BackgroundMusic enabled={settings.backgroundMusic} volume={0.3} />
 
-      {/* Background Music Controls */}
-      <BackgroundMusic enabled={settings.backgroundMusic} volume={0.3} />
+        {/* Play/Pause Button */}
+        <TouchableOpacity style={styles.playPauseIcon} onPress={() => setIsPaused(!isPaused)}>
+          <Text style={styles.playPauseText}>{isPaused ? '▶' : '⏸'}</Text>
+        </TouchableOpacity>
 
-      {/* Pomodoro Timer - Bottom Right */}
-      <View style={styles.timerContainer}>
+        {/* Settings Icon */}
+        <TouchableOpacity style={styles.settingsIcon} onPress={() => setSettingsPanelVisible(true)}>
+          <View style={styles.settingsIconInner}>
+            <View style={styles.settingsLine} />
+            <View style={styles.settingsLine} />
+            <View style={styles.settingsLine} />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Pomodoro Timer - Responsive positioning */}
+      <View style={[styles.timerContainer, isLandscape && styles.timerContainerLandscape]}>
         <PomodoroTimer
           workDuration={settings.workDuration}
           breakDuration={settings.breakDuration}
@@ -457,7 +411,13 @@ const SolarSystemView: React.FC = () => {
         visible={settingsPanelVisible}
         onClose={() => setSettingsPanelVisible(false)}
         settings={settings}
-        onSettingsChange={setSettings}
+        onSettingsChange={(newSettings) => {
+          setSettings(newSettings);
+          // Persist to localStorage (web only)
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('motivationWatchSettings', JSON.stringify(newSettings));
+          }
+        }}
       />
     </SafeAreaView>
   );
@@ -468,89 +428,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  controlPanel: {
+  topRightControls: {
     position: 'absolute',
-    top: 16,
-    left: 16,
-    backgroundColor: 'rgba(17, 24, 39, 0.8)',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(75, 85, 99, 0.5)',
-    width: 256,
-    zIndex: 100,
-  },
-  controlTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  controlSubtitle: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 16,
-  },
-  controlsContainer: {
-    gap: 16,
-  },
-  playSpeedRow: {
+    top: 60,
+    right: 20,
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
+    zIndex: 190,
   },
-  playButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  playPauseIcon: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  playButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-  sliderContainer: {
-    flex: 1,
-  },
-  sliderWrapper: {
-    marginTop: 16,
-  },
-  sliderLabel: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 4,
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
-  },
-  toggleButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 22,
   },
-  toggleButtonActive: {
-    backgroundColor: '#3B82F6',
-  },
-  toggleText: {
-    fontSize: 12,
-    color: '#D1D5DB',
-  },
-  toggleTextActive: {
+  playPauseText: {
     color: '#FFFFFF',
+    fontSize: 18,
   },
   infoPanel: {
     position: 'absolute',
-    top: 16,
+    top: 120,
     right: 16,
     backgroundColor: 'rgba(17, 24, 39, 0.9)',
     borderRadius: 12,
@@ -558,8 +458,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(75, 85, 99, 0.5)',
     width: 288,
-    maxHeight: '80%',
-    zIndex: 100,
+    maxHeight: '65%',
+    zIndex: 170,
+  },
+  infoPanelLandscape: {
+    top: 16,
+    left: 16,
+    right: 'auto',
+    maxHeight: '90%',
+    width: 300,
+    zIndex: 170,
   },
   infoPanelHeader: {
     flexDirection: 'row',
@@ -634,7 +542,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderWidth: 1,
     borderColor: 'rgba(75, 85, 99, 0.5)',
-    zIndex: 100,
+    zIndex: 180,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -658,16 +566,12 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   settingsIcon: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 22,
-    zIndex: 100,
   },
   settingsIconInner: {
     width: 20,
@@ -683,9 +587,24 @@ const styles = StyleSheet.create({
   },
   timerContainer: {
     position: 'absolute',
-    bottom: 40,
-    right: 40,
-    zIndex: 100,
+    bottom: 120,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 200,
+  },
+  timerContainerLandscape: {
+    bottom: 20,
+    right: 20,
+    left: 'auto',
+    alignItems: 'flex-end',
+    zIndex: 200,
+  },
+  quickSelectLandscape: {
+    bottom: 20,
+    left: 20,
+    transform: [{translateX: 0}],
+    zIndex: 180,
   },
 });
 

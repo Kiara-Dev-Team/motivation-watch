@@ -1,0 +1,32 @@
+// Set Node.js path for Android Studio launched from Dock
+import java.lang.reflect.Field
+
+def setEnv(String key, String value) {
+    try {
+        def env = System.getenv()
+        def cl = env.getClass()
+        def field = cl.getDeclaredField("m")
+        field.setAccessible(true)
+        def writableEnv = (Map<String, String>) field.get(env)
+        writableEnv.put(key, value)
+    } catch (Exception e) {
+        println "Warning: Could not modify environment: ${e.message}"
+    }
+}
+
+// Add Homebrew paths to PATH
+def nodePath = "/opt/homebrew/bin"
+def currentPath = System.getenv("PATH") ?: ""
+if (!currentPath.contains(nodePath)) {
+    def newPath = "$nodePath:/usr/local/bin:$currentPath"
+    println "Adding Homebrew to PATH"
+    setEnv("PATH", newPath)
+}
+
+allprojects {
+    beforeEvaluate { project ->
+        if (project.hasProperty("android") || project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.library")) {
+            println "Project ${project.name} configured with Homebrew PATH"
+        }
+    }
+}

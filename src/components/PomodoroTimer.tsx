@@ -31,6 +31,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const [timeRemaining, setTimeRemaining] = useState(workDuration * 60); // in seconds
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(Date.now());
+  const sessionTypeRef = useRef<SessionType>('work');
 
   // Store durations to apply on next session
   const nextWorkDurationRef = useRef(workDuration);
@@ -48,6 +49,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
   // Start or resume timer
   const startTimer = () => {
+    console.log('Start timer pressed, current state:', timerState);
     // When starting from idle, use the latest durations
     if (timerState === 'idle') {
       currentWorkDurationRef.current = nextWorkDurationRef.current;
@@ -59,11 +61,13 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
   // Pause timer
   const pauseTimer = () => {
+    console.log('Pause timer pressed');
     setTimerState('paused');
   };
 
   // Reset timer
   const resetTimer = () => {
+    console.log('Reset timer pressed');
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -81,9 +85,16 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     nextBreakDurationRef.current = breakDuration;
   }, [workDuration, breakDuration]);
 
+  // Keep sessionTypeRef in sync
+  useEffect(() => {
+    sessionTypeRef.current = sessionType;
+  }, [sessionType]);
+
   // Timer tick effect
   useEffect(() => {
+    console.log('Timer effect triggered, state:', timerState);
     if (timerState === 'running') {
+      console.log('Setting up interval');
       intervalRef.current = setInterval(() => {
         const now = Date.now();
         const delta = (now - lastTickRef.current) / 1000; // seconds elapsed
@@ -91,11 +102,13 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
         setTimeRemaining((prev) => {
           const newTime = prev - delta;
+          console.log('Timer tick:', prev, '->', newTime);
 
           if (newTime <= 0) {
             // Session completed - switch to next session and keep running
-            if (sessionType === 'work') {
+            if (sessionTypeRef.current === 'work') {
               // Work session done, switch to break
+              console.log('Work session complete, switching to break');
               setSessionType('break');
               // Apply next break duration and update current
               currentBreakDurationRef.current = nextBreakDurationRef.current;
@@ -106,6 +119,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
               return currentBreakDurationRef.current * 60;
             } else {
               // Break session done, switch back to work and keep running
+              console.log('Break session complete, switching to work');
               setSessionType('work');
               // Apply next work duration and update current
               currentWorkDurationRef.current = nextWorkDurationRef.current;
@@ -120,8 +134,10 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           return newTime;
         });
       }, 100);
+      console.log('Interval set:', intervalRef.current);
     } else {
       if (intervalRef.current) {
+        console.log('Clearing interval');
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
@@ -129,11 +145,12 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
     return () => {
       if (intervalRef.current) {
+        console.log('Cleanup: clearing interval');
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [timerState, onComplete, sessionType]);
+  }, [timerState]);
 
   // Update lastTickRef when state changes to running
   useEffect(() => {
@@ -169,13 +186,22 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
         <TouchableOpacity
           style={styles.button}
           onPress={timerState === 'running' ? pauseTimer : startTimer}
+          activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="button"
         >
           <Text style={styles.buttonText}>
             {timerState === 'running' ? 'PAUSE' : 'START'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={resetTimer}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={resetTimer}
+          activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="button"
+        >
           <Text style={styles.buttonText}>RESET</Text>
         </TouchableOpacity>
       </View>
@@ -185,7 +211,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: 20,
   },
   sessionType: {
