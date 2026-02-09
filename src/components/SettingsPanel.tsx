@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,7 @@ import {
   ScrollView,
   TextInput,
   Modal,
-  PanResponder,
-  GestureResponderEvent,
-  PanResponderGestureState,
+  Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -28,6 +26,7 @@ export interface Settings {
   zoom: number; // 0.3-3
   starDensity: number; // 0-100
   backgroundMusic: boolean;
+  animationPaused: boolean;
 }
 
 interface SettingsPanelProps {
@@ -47,82 +46,9 @@ const DEFAULT_SETTINGS: Settings = {
   zoom: 1.8,
   starDensity: 100,
   backgroundMusic: false,
+  animationPaused: false,
 };
 
-/**
- * Custom Slider Component for Android compatibility
- */
-interface CustomSliderProps {
-  value: number;
-  minimumValue: number;
-  maximumValue: number;
-  step: number;
-  onValueChange: (value: number) => void;
-}
-
-const CustomSlider: React.FC<CustomSliderProps> = ({
-  value,
-  minimumValue,
-  maximumValue,
-  step,
-  onValueChange,
-}) => {
-  const sliderWidth = useRef(0);
-  const sliderX = useRef(0);
-
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onStartShouldSetPanResponderCapture: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponderCapture: () => true,
-    onPanResponderTerminationRequest: () => false,
-    onPanResponderGrant: (evt) => {
-      const x = evt.nativeEvent.pageX - sliderX.current;
-      handleTouch(x);
-    },
-    onPanResponderMove: (evt) => {
-      const x = evt.nativeEvent.pageX - sliderX.current;
-      handleTouch(x);
-    },
-  });
-
-  const handleTouch = (x: number) => {
-    if (sliderWidth.current === 0) return;
-
-    const percentage = Math.max(0, Math.min(1, x / sliderWidth.current));
-    const rawValue = minimumValue + percentage * (maximumValue - minimumValue);
-    const steppedValue = Math.round(rawValue / step) * step;
-    const clampedValue = Math.max(minimumValue, Math.min(maximumValue, steppedValue));
-
-    onValueChange(clampedValue);
-  };
-
-  const percentage = ((value - minimumValue) / (maximumValue - minimumValue)) * 100;
-
-  return (
-    <View
-      style={styles.customSliderContainer}
-      onLayout={(e) => {
-        sliderWidth.current = e.nativeEvent.layout.width;
-        e.nativeEvent.layout.x && (sliderX.current = e.nativeEvent.layout.x);
-      }}
-      onStartShouldSetResponder={() => true}
-      {...panResponder.panHandlers}
-    >
-      <View
-        style={styles.customSliderTrack}
-        onLayout={(e) => {
-          e.target.measure((x, y, width, height, pageX, pageY) => {
-            sliderX.current = pageX;
-          });
-        }}
-      >
-        <View style={[styles.customSliderFill, {width: `${percentage}%`}]} />
-      </View>
-      <View style={[styles.customSliderThumb, {left: `${percentage}%`}]} />
-    </View>
-  );
-};
 
 /**
  * SettingsPanel Component
@@ -223,11 +149,19 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           onPress={onClose}
         />
         <Animated.View style={[styles.panel, animatedStyle]}>
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            nestedScrollEnabled={true}
+            scrollEventThrottle={16}
+          >
             {/* Header */}
             <View style={styles.header}>
               <Text style={styles.title}>Settings</Text>
-              <TouchableOpacity onPress={onClose}>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.closeButtonContainer}
+                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              >
                 <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -262,26 +196,46 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Animation Speed */}
             <View style={styles.setting}>
-              <Text style={styles.label}>Animation Speed: {localSettings.speed.toFixed(1)}×</Text>
-              <CustomSlider
-                value={localSettings.speed}
-                minimumValue={0.1}
-                maximumValue={10}
-                step={0.1}
-                onValueChange={(value) => applySettingsImmediately({...localSettings, speed: value})}
-              />
+              <Text style={styles.label}>Animation Speed</Text>
+              <View style={styles.valueControl}>
+                <TouchableOpacity
+                  style={[styles.controlButton, localSettings.speed <= 0.1 && styles.controlButtonDisabled]}
+                  onPress={() => applySettingsImmediately({...localSettings, speed: Math.max(0.1, localSettings.speed - 0.1)})}
+                  disabled={localSettings.speed <= 0.1}
+                >
+                  <Text style={[styles.controlButtonText, localSettings.speed <= 0.1 && styles.controlButtonTextDisabled]}>−</Text>
+                </TouchableOpacity>
+                <Text style={styles.valueLabel}>{localSettings.speed.toFixed(1)}×</Text>
+                <TouchableOpacity
+                  style={[styles.controlButton, localSettings.speed >= 10 && styles.controlButtonDisabled]}
+                  onPress={() => applySettingsImmediately({...localSettings, speed: Math.min(10, localSettings.speed + 0.1)})}
+                  disabled={localSettings.speed >= 10}
+                >
+                  <Text style={[styles.controlButtonText, localSettings.speed >= 10 && styles.controlButtonTextDisabled]}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Zoom Level */}
             <View style={styles.setting}>
-              <Text style={styles.label}>Zoom Level: {localSettings.zoom.toFixed(1)}×</Text>
-              <CustomSlider
-                value={localSettings.zoom}
-                minimumValue={0.3}
-                maximumValue={3}
-                step={0.1}
-                onValueChange={(value) => applySettingsImmediately({...localSettings, zoom: value})}
-              />
+              <Text style={styles.label}>Zoom Level</Text>
+              <View style={styles.valueControl}>
+                <TouchableOpacity
+                  style={[styles.controlButton, localSettings.zoom <= 0.3 && styles.controlButtonDisabled]}
+                  onPress={() => applySettingsImmediately({...localSettings, zoom: Math.max(0.3, localSettings.zoom - 0.1)})}
+                  disabled={localSettings.zoom <= 0.3}
+                >
+                  <Text style={[styles.controlButtonText, localSettings.zoom <= 0.3 && styles.controlButtonTextDisabled]}>−</Text>
+                </TouchableOpacity>
+                <Text style={styles.valueLabel}>{localSettings.zoom.toFixed(1)}×</Text>
+                <TouchableOpacity
+                  style={[styles.controlButton, localSettings.zoom >= 3 && styles.controlButtonDisabled]}
+                  onPress={() => applySettingsImmediately({...localSettings, zoom: Math.min(3, localSettings.zoom + 0.1)})}
+                  disabled={localSettings.zoom >= 3}
+                >
+                  <Text style={[styles.controlButtonText, localSettings.zoom >= 3 && styles.controlButtonTextDisabled]}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Show Orbits */}
@@ -332,6 +286,19 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               >
                 <View style={[styles.toggleTrack, localSettings.backgroundMusic && styles.toggleTrackActive]}>
                   <View style={[styles.toggleThumb, localSettings.backgroundMusic && styles.toggleThumbActive]} />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Pause Animation */}
+            <View style={styles.setting}>
+              <Text style={styles.label}>Pause Animation</Text>
+              <TouchableOpacity
+                style={styles.toggle}
+                onPress={() => applySettingsImmediately({...localSettings, animationPaused: !localSettings.animationPaused})}
+              >
+                <View style={[styles.toggleTrack, localSettings.animationPaused && styles.toggleTrackActive]}>
+                  <View style={[styles.toggleThumb, localSettings.animationPaused && styles.toggleThumbActive]} />
                 </View>
               </TouchableOpacity>
             </View>
@@ -389,16 +356,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    paddingTop: 10,
   },
   title: {
     color: '#FFFFFF',
     fontSize: 28,
     fontWeight: '700',
   },
+  closeButtonContainer: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -10,
+  },
   closeButton: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: '300',
+    lineHeight: 22,
+    width: 22,
+    height: 22,
+    textAlign: 'center',
   },
   setting: {
     gap: 8,
@@ -417,38 +396,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderRadius: 4,
   },
-  customSliderContainer: {
-    height: 40,
+  valueControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  controlButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: '#444444',
+    borderRadius: 4,
     justifyContent: 'center',
-    paddingHorizontal: 0,
-    marginTop: 12,
-    marginBottom: 8,
+    alignItems: 'center',
   },
-  customSliderTrack: {
-    height: 6,
-    backgroundColor: '#444444',
-    borderRadius: 3,
-    overflow: 'hidden',
+  controlButtonDisabled: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#333333',
+    opacity: 0.4,
   },
-  customSliderFill: {
-    height: '100%',
-    backgroundColor: '#4169E1',
-    borderRadius: 3,
+  controlButtonText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '300',
+    lineHeight: 24,
   },
-  customSliderThumb: {
-    position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    marginLeft: -12,
-    top: '50%',
-    marginTop: -12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+  controlButtonTextDisabled: {
+    color: '#666666',
+  },
+  valueLabel: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    minWidth: 60,
+    textAlign: 'center',
   },
   toggle: {
     alignSelf: 'flex-start',

@@ -66,7 +66,6 @@ const SolarSystemView: React.FC = () => {
 
   // Animation state
   const [time, setTime] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
   // UI state
   const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
@@ -99,12 +98,12 @@ const SolarSystemView: React.FC = () => {
 
   // Animation loop
   useEffect(() => {
-    if (isPaused) return;
+    if (settings.animationPaused) return;
     const interval = setInterval(() => {
       setTime(t => t + 0.008 * settings.speed);
     }, 16);
     return () => clearInterval(interval);
-  }, [isPaused, settings.speed]);
+  }, [settings.animationPaused, settings.speed]);
 
   // Generate asteroid belt
   const asteroids = useMemo(
@@ -380,11 +379,6 @@ const SolarSystemView: React.FC = () => {
         {/* Background Music Controls */}
         <BackgroundMusic enabled={settings.backgroundMusic} volume={0.3} />
 
-        {/* Play/Pause Button */}
-        <TouchableOpacity style={styles.playPauseIcon} onPress={() => setIsPaused(!isPaused)}>
-          <Text style={styles.playPauseText}>{isPaused ? '▶' : '⏸'}</Text>
-        </TouchableOpacity>
-
         {/* Settings Icon */}
         <TouchableOpacity style={styles.settingsIcon} onPress={() => setSettingsPanelVisible(true)}>
           <View style={styles.settingsIconInner}>
@@ -437,18 +431,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     zIndex: 190,
-  },
-  playPauseIcon: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 22,
-  },
-  playPauseText: {
-    color: '#FFFFFF',
-    fontSize: 18,
   },
   infoPanel: {
     position: 'absolute',
